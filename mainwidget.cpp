@@ -40,10 +40,10 @@ bool MainWidget::Open(const QString &strPic)
         return false;
     }
 
-    return OpenPic(picInfo.absoluteFilePath(), &(picInfo.absoluteDir()));
+    return OpenPic(picInfo.absoluteFilePath(), &(picInfo.absoluteDir()), false);
 }
 
-bool MainWidget::OpenPic(const QString &strPic, const QDir *dir)
+bool MainWidget::OpenPic(const QString &strPic, const QDir *dir,  bool bNeedFixPos)
 {
     if(!m_originPixmap->load(strPic))
     {
@@ -65,7 +65,7 @@ bool MainWidget::OpenPic(const QString &strPic, const QDir *dir)
     }
     m_degrees = 0;
 
-    SetMask();
+    SetMask(bNeedFixPos);
 
     return true;
 }
@@ -75,12 +75,12 @@ void MainWidget::TriggerOpenDialog()
     qDebug() << "open png...";
     QFileDialog* dialog = new QFileDialog(this);//创建对话框
     dialog->resize(700,400);    //设置显示的大小
-    dialog->setFilter( "Allfile(*.*);;pngfile(*.png);;jpgfile(*.jpg);;giffile(*.gif)"); //设置文件过滤器
+    dialog->setFilter( "Allfile(*.*);;pngfile(*.png);;jpgfile(*.jpg);;giffile(*.gif);;bmpfile(*.bmp)"); //设置文件过滤器
     dialog->setViewMode(QFileDialog::Detail);  //设置浏览模式，有 列表（list） 模式和 详细信息（detail）两种方式
     if ( dialog->exec() == QDialog::Accepted )   //如果成功的执行
     {
         qDebug() << "has select file:" << dialog->selectedFiles()[0] << "dir:" << dialog->directory().path();
-        OpenPic(dialog->selectedFiles()[0], &(dialog->directory()) );
+        OpenPic(dialog->selectedFiles()[0], &(dialog->directory()), true);
     }
 
     dialog->close();
@@ -132,7 +132,7 @@ void MainWidget::Init()
     m_originPos = new QPoint;
     m_originPixmap = new QPixmap();
 
-    OpenPic(":/images/yoda.png");
+    OpenPic(":/images/yoda.png", NULL, false);
 }
 
 void MainWidget::setupContextMenu()
@@ -240,7 +240,7 @@ void MainWidget::wheelEvent(QWheelEvent *event)
     event->accept();
 }
 
-void MainWidget::SetMask()
+void MainWidget::SetMask(bool bNeedFixPos)
 {
     qDebug() << "degress:" << m_degrees << " scale" << m_scale;
 
@@ -254,7 +254,7 @@ void MainWidget::SetMask()
     pixmap = pixmap.transformed(leftmatrix, Qt::SmoothTransformation);
 
     // 修正移动的位置,因为图片的大小肯定不一致，而我们希望每次显示的图片都和原来的中心点位置一致
-    if(!m_transferdPixmap.isNull())
+    if(bNeedFixPos)
     {
         QPoint currentPicCenter = this->frameGeometry().center();
         QPoint newPicCenter = QRect(this->frameGeometry().topLeft(), pixmap.size()).center();
@@ -266,12 +266,9 @@ void MainWidget::SetMask()
     // mask
     m_transferdPixmap = pixmap;
     resize(m_transferdPixmap.width(), m_transferdPixmap.height());
-    clearMask();
+//    clearMask();
     setMask(m_transferdPixmap.mask());
-    update();
-
-
-
+//    update();
 }
 
 void MainWidget::keyPressEvent(QKeyEvent *e)
@@ -298,7 +295,7 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
                     iter--;
                     strPic = *iter;
                 }
-                OpenPic(strPic);
+                OpenPic(strPic, NULL, true);
             }
 
             break;
@@ -320,7 +317,7 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
                 {
                     strPic = *iter;
                 }
-                OpenPic(strPic);
+                OpenPic(strPic, NULL, true);
             }
 
             break;
@@ -378,7 +375,7 @@ void MainWidget::Transfer(bool direction)
         }
     }
 
-    SetMask();
+    SetMask(false);
 }
 
 
@@ -394,7 +391,13 @@ void MainWidget::GetPictures(const QDir &dir)
     {
         const QString &strFileName = *iter;
 
-        if(strFileName.endsWith(".png") || strFileName.endsWith(".jpg") || strFileName.endsWith(".gif"))
+        if(strFileName.endsWith(".png") ||
+           strFileName.endsWith(".jpg") ||
+           strFileName.endsWith(".gif") ||
+           strFileName.endsWith(".bmp") ||
+           strFileName.endsWith(".tiff")||
+           strFileName.endsWith(".ico") ||
+           strFileName.endsWith(".svg"))
         {
             QString strFullFileName = QString("%1/%2").arg(dir.path()).arg(strFileName);
             m_pictures.insert(strFullFileName);

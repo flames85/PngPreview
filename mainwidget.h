@@ -30,8 +30,8 @@ protected:
 private:
     void Init();
     void setupContextMenu();
-    void SetMask();
-    bool OpenPic(const QString &strPic, const QDir *dir = NULL);
+    void SetMask(bool bNeedFixPos);
+    bool OpenPic(const QString &strPic, const QDir *dir, bool bNeedFixPos);
     void Transfer(bool direction);
     void GetPictures(const QDir &dir);
 
