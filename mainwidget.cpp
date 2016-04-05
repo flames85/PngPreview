@@ -112,13 +112,20 @@ void MainWidget::TriggerOpenDialog()
 
 void MainWidget::TriggerHelp()
 {
+    QFile help(":/help/shortcutkey.txt");
+    if(!help.open(QIODevice:: ReadOnly))
+    {
+        return;
+    }
+
+    QByteArray content = help.readAll();
+
     QMessageBox *msgBox = new QMessageBox(QMessageBox::Information,
                                           "Help",
-                                          "Wheel        : Zoom in or out\t\n"
-                                          "Ctrl+Wheel : Rotate left or right\t\n"
-                                          "\t\t- By Flames",
+                                          QString::fromUtf8(content),
                                           QMessageBox::Ok);
 
+//    msgBox->setIconPixmap(QPixmap(":/images/yoda.png"));
     msgBox->show();
 }
 
@@ -469,5 +476,6 @@ void MainWidget::Move(const QPoint &moveTo)
 {
     this->move(moveTo);
     m_msgWidget->move(moveTo);
+    m_msgWidget->raise();
     qDebug() << "move to: " << moveTo;
 }

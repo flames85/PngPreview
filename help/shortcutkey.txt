@@ -1,0 +1,8 @@
+
+zoom in: wheel up/key_up
+zoom out: wheel down/key_down
+next picture: key_right/click at right side
+previous picture: key_left/click at left side 
+clockwise rotation : ctrl + wheel up/ctrl + key_up
+anticlockwise rotation : ctrl + wheel down/ctrl + key_down
+						-- Flames

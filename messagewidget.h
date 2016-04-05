@@ -5,6 +5,7 @@
 #include <QSet>
 
 class QLabel;
+class QPropertyAnimation;
 
 class MessageWidget : public QWidget
 {
@@ -20,17 +21,21 @@ public:
 
 protected:
 
+    virtual void enterEvent(QEvent *);
+    virtual void leaveEvent(QEvent *);
 
 private:
+    void GradualHide();
 
-    void Hide();
 
 private slots:
+    void TriggerHide();
 
 
 private:
 
-    QLabel*     m_label;
+    QLabel*                 m_label;
+    QPropertyAnimation *    m_animation;
 };
 
 #endif // __MESSAGE_WIDGET_H__

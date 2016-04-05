@@ -19,8 +19,7 @@ HEADERS  += \
     messagewidget.h
 
 RESOURCES += \
-    images.qrc
-
+    PngPreview.qrc
 
 RC_FILE += \
     PngPreview.rc
