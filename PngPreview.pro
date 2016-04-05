@@ -11,10 +11,12 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    mainwidget.cpp
+    mainwidget.cpp \
+    messagewidget.cpp
 
 HEADERS  += \
-    mainwidget.h
+    mainwidget.h \
+    messagewidget.h
 
 RESOURCES += \
     images.qrc

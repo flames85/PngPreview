@@ -9,12 +9,17 @@ int main(int argc, char *argv[])
     app.setWindowIcon(QIcon("yoda128.ico"));
 
     MainWidget *widget = new MainWidget;
+    widget->Init();
     widget->show();
     widget->setAcceptDrops(true);
 
     if(argc >= 2)
     {
-        widget->Open(QString(argv[1]));
+        widget->OpenPic(QString(argv[1]));
+    }
+    else
+    {
+        widget->OpenPic(":/images/yoda.png", NULL);
     }
 
     return app.exec();

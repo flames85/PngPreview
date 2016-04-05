@@ -7,6 +7,7 @@
 class QPoint;
 class QPixmap;
 class QDir;
+class MessageWidget;
 
 class MainWidget : public QWidget
 {
@@ -15,25 +16,33 @@ public:
     explicit MainWidget(QWidget *parent = 0);
     virtual ~MainWidget();
 
-    bool Open(const QString &strPic);
+    void Init();
+
+    bool OpenPic(const QString &strPic);
+    bool OpenPic(const QString &strPic, const QDir *dir);
 
 protected:
+    virtual void mouseReleaseEvent(QMouseEvent *);
     virtual void mousePressEvent(QMouseEvent *);
     virtual void mouseMoveEvent(QMouseEvent *);
     virtual void paintEvent(QPaintEvent *);
     virtual void wheelEvent(QWheelEvent *event);
 //    virtual void mouseDoubleClickEvent(QMouseEvent *event);
     virtual void keyPressEvent(QKeyEvent *e);
+    virtual void keyReleaseEvent(QKeyEvent *e);
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dropEvent(QDropEvent *event);
 
 private:
-    void Init();
+
     void setupContextMenu();
     void SetMask(bool bNeedFixPos);
-    bool OpenPic(const QString &strPic, const QDir *dir, bool bNeedFixPos);
-    void Transfer(bool direction);
+
+    void Transfer(bool bDirection);
+    void Browse(bool bDirection);
     void GetPictures(const QDir &dir);
+
+    void Move(const QPoint &moveTo);
 
 private slots:
     void TriggerOpenDialog();
@@ -42,6 +51,7 @@ private slots:
     void TrigerKeepScale();
 
 private:
+    bool            m_bMouseMove;
     // 原始位置
     QPoint*         m_originPos;
     // 原始图片信息，缩放后会丢失信息，所以每次都用原图片信息缩放
@@ -55,7 +65,13 @@ private:
     int             m_degrees;
     // dir
     QString         m_strCurrentPic;
-    QSet<QString>   m_pictures;
+    QSet<QString>   m_dirPic;
+
+    // support format
+    QList<QString>  m_supportFormatList;
+
+    // message widget
+    MessageWidget*  m_msgWidget;
 };
 
 #endif // __MAIN_WIDGET_H__
