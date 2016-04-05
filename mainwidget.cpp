@@ -173,10 +173,10 @@ void MainWidget::setupContextMenu()
     // open
     QAction *act_yoda = new QAction(QIcon(":/images/yoda.png"), tr("Open"), this);
     // top
-    QAction *act_top = new QAction(/*QIcon(":/images/star_beast.png"),*/ tr("Stay on top"), this);
+    QAction *act_top = new QAction(/*QIcon(":/images/star_beast.png"),*/ tr("Always on Top"), this);
     act_top->setCheckable(true);
     // lock scale
-    QAction *act_keep_scale = new QAction(/*QIcon(":/images/star_beast.png"),*/ tr("Keep scale"), this);
+    QAction *act_keep_scale = new QAction(/*QIcon(":/images/star_beast.png"),*/ tr("Keep Scale"), this);
     act_keep_scale->setCheckable(true);
     act_keep_scale->setChecked(true);
     // help
