@@ -35,34 +35,56 @@ protected:
 
 private:
 
+    // 右键菜单
     void setupContextMenu();
+    // 将图片设置为界面
     void SetMask(bool bNeedFixPos);
-
-    void Transfer(bool bDirection);
+    // 图片缩放
+    void Zoom(bool bDirection);
+    // 图片旋转
+    void Rotate(bool bDirection);
+    // 浏览
     void Browse(bool bDirection);
+    // 获取目录下所有图片文件名称
     void GetPictures(const QDir &dir);
-
+    // 位置移动
     void Move(const QPoint &moveTo);
 
 private slots:
+    // 打开文件选择对话框
     void TriggerOpenDialog();
+    // 打开帮助对话框
     void TriggerHelp();
-    void TrigerStayOnTop();
-    void TrigerKeepScale();
+    // 设置始终保持最前
+    void TrigerAlwaysOnTop();
+//    // 设置保持缩放
+//    void TrigerKeepScale();
+    // 垂直或水平翻转
+    void TriggerFlip();
 
 private:
+    // 判断鼠标位置是否移动了
     bool            m_bMouseMove;
     // 原始位置
     QPoint*         m_originPos;
+
+    //! 以下一组成员变量保存了图片的信息, 每次变化图片显示(包括新打开图片,旋转图片,缩放图片)都以原图信息做改变厚显示
+    /***************************************/
     // 原始图片信息，缩放后会丢失信息，所以每次都用原图片信息缩放
     QPixmap*        m_originPixmap;
     // 变换后的图片信息
     QPixmap         m_transferdPixmap;
     // 缩放值
     double          m_scale;
-    bool            m_bKeepScale;
+    QAction*        m_act_keep_scale;
     // 旋转角度值
     int             m_degrees;
+    // 是否水平翻转
+    QAction*        m_act_flip_h;
+    // 是否垂直翻转
+    QAction*        m_act_flip_v;
+    /***************************************/
+
     // dir
     QString         m_strCurrentPic;
     QSet<QString>   m_dirPic;

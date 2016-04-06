@@ -13,8 +13,10 @@ MainWidget::MainWidget(QWidget *parent) :
     m_originPos(new QPoint),
     m_originPixmap(new QPixmap()),
     m_scale(1.0),
-    m_bKeepScale(true),
+    m_act_keep_scale(NULL),
     m_degrees(0),
+    m_act_flip_h(NULL),
+    m_act_flip_v(NULL),
     m_msgWidget( new MessageWidget())
 {
     m_supportFormatList << "png" << "jpg" << "gif" << "bmp" << "tiff" << "ico" << "svg";
@@ -81,12 +83,16 @@ bool MainWidget::OpenPic(const QString &strPic, const QDir *dir)
     {
         GetPictures(*dir);
     }
-    // 因为打开了新文件，所以缩放和角度恢复初始值
-    if(!m_bKeepScale) // 只有非保持缩放的时候才初始化scale为1
+
+    //! 因为打开了新文件: 初始化所有状态
+    if(!m_act_keep_scale->isChecked()) // 只有非保持缩放的时候才初始化scale为1
     {
         m_scale = 1.0;
     }
-    m_degrees = 0;
+    m_degrees = 0;    
+    m_act_flip_h->setChecked(false);
+    m_act_flip_v->setChecked(false);
+    //! 初始化结束
 
     SetMask(true);
 
@@ -129,7 +135,7 @@ void MainWidget::TriggerHelp()
     msgBox->show();
 }
 
-void MainWidget::TrigerStayOnTop()
+void MainWidget::TrigerAlwaysOnTop()
 {
     //! 置顶
     Qt::WindowFlags flags = this->windowFlags();
@@ -138,19 +144,10 @@ void MainWidget::TrigerStayOnTop()
     this->show();
 }
 
-void MainWidget::TrigerKeepScale()
+// 垂直或水平翻转
+void MainWidget::TriggerFlip()
 {
-    QAction* act = dynamic_cast<QAction*>(sender());
-    if(act->isChecked())
-    {
-        //! lock
-        m_bKeepScale = true;
-    }
-    else
-    {
-        //! unlock
-        m_bKeepScale = false;
-    }
+    SetMask(false);
 }
 
 void MainWidget::Init()
@@ -172,28 +169,40 @@ void MainWidget::setupContextMenu()
 
     // open
     QAction *act_yoda = new QAction(QIcon(":/images/yoda.png"), tr("Open"), this);
+    // flip horizontal
+    m_act_flip_h = new QAction(tr("Flip Horizontal"), this);
+    m_act_flip_h->setCheckable(true);
+    m_act_flip_h->setChecked(false);
+    // flip vertical
+    m_act_flip_v = new QAction(tr("Flip Vertical"), this);
+    m_act_flip_v->setCheckable(true);
+    m_act_flip_v->setChecked(false);
     // top
-    QAction *act_top = new QAction(/*QIcon(":/images/star_beast.png"),*/ tr("Always on Top"), this);
+    QAction *act_top = new QAction( tr("Always on Top"), this);
     act_top->setCheckable(true);
+    act_top->setChecked(false);
     // lock scale
-    QAction *act_keep_scale = new QAction(/*QIcon(":/images/star_beast.png"),*/ tr("Keep Scale"), this);
-    act_keep_scale->setCheckable(true);
-    act_keep_scale->setChecked(true);
+    m_act_keep_scale = new QAction(tr("Keep Scale"), this);
+    m_act_keep_scale->setCheckable(true);
+    m_act_keep_scale->setChecked(true);
     // help
-    QAction *act_rabbit = new QAction(QIcon(":/images/rabbit.png"), tr("Help"), this);
+    QAction *act_rabbit = new QAction(tr("Help"), this);
     // quit
-    QAction *act_quit = new QAction(QIcon(":/images/cyclops.png"), tr("&Quit"), this);
+    QAction *act_quit = new QAction(tr("&Quit"), this);
 
     // adds
     addAction(act_yoda);
+    addAction(m_act_flip_h);
+    addAction(m_act_flip_v);
     addAction(act_top);
-    addAction(act_keep_scale);
+    addAction(m_act_keep_scale);
     addAction(act_rabbit);
     addAction(act_quit);
     // slot
     connect(act_yoda, SIGNAL(triggered()), this, SLOT(TriggerOpenDialog()));
-    connect(act_top, SIGNAL(triggered()), this, SLOT(TrigerStayOnTop()));
-    connect(act_keep_scale, SIGNAL(triggered()), this, SLOT(TrigerKeepScale()));
+    connect(m_act_flip_h, SIGNAL(triggered()), this, SLOT(TriggerFlip()));
+    connect(m_act_flip_v, SIGNAL(triggered()), this, SLOT(TriggerFlip()));
+    connect(act_top, SIGNAL(triggered()), this, SLOT(TrigerAlwaysOnTop()));
     connect(act_rabbit, SIGNAL(triggered()), this, SLOT(TriggerHelp()));
     connect(act_quit, SIGNAL(triggered()), this, SLOT(close()));
 }
@@ -275,11 +284,18 @@ void MainWidget::wheelEvent(QWheelEvent *event)
 {
     int numDegrees = event ->delta() / 8;
     int step = numDegrees / 15;
-
-    if(step > 0)
-        Transfer(true);
+    // 方向判定
+    bool bDirection = step > 0 ? true : false;
+    // 按住ctrl的旋转
+    if ( QApplication::keyboardModifiers () == Qt::ControlModifier)
+    {
+        Rotate(bDirection);
+    }
+    // 未按住ctrl的缩放
     else
-        Transfer(false);
+    {
+        Zoom(bDirection);
+    }
 
     event->accept();
 }
@@ -287,15 +303,17 @@ void MainWidget::wheelEvent(QWheelEvent *event)
 void MainWidget::SetMask(bool bNeedFixPos)
 {
 //    qDebug() << "degress:" << m_degrees << " scale" << m_scale;
-
     // 缩放
     QPixmap &pixmap = m_originPixmap->scaled(m_originPixmap->width() * m_scale,
                                              m_originPixmap->height() * m_scale);
-
     // 旋转
     QMatrix leftmatrix;
     leftmatrix.rotate(m_degrees);
     pixmap = pixmap.transformed(leftmatrix, Qt::SmoothTransformation);
+
+    // 翻转
+    qDebug() << "flip:" << m_act_flip_h->isChecked() << m_act_flip_v->isChecked();
+    pixmap = QPixmap::fromImage( pixmap.toImage().mirrored(m_act_flip_h->isChecked(), m_act_flip_v->isChecked()) );
 
     // 修正移动的位置,因为图片的大小肯定不一致，而我们希望每次显示的图片都和原来的中心点位置一致
     if(bNeedFixPos)
@@ -306,6 +324,7 @@ void MainWidget::SetMask(bool bNeedFixPos)
         QPoint finalTopleft = this->frameGeometry().topLeft() + deltaPos;
         Move(finalTopleft);
     }
+
 
     // mask
     m_transferdPixmap = pixmap;
@@ -332,12 +351,30 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
         }
         case Qt::Key_Up:
         {
-            Transfer(true);
+            // 按住ctrl的旋转
+            if ( QApplication::keyboardModifiers () == Qt::ControlModifier)
+            {
+                Rotate(true);
+            }
+            // 未按住ctrl的缩放
+            else
+            {
+                Zoom(true);
+            }
             break;
         }
         case Qt::Key_Down:
         {
-            Transfer(false);
+            // 按住ctrl的旋转
+            if ( QApplication::keyboardModifiers () == Qt::ControlModifier)
+            {
+                Rotate(false);
+            }
+            // 未按住ctrl的缩放
+            else
+            {
+                Zoom(false);
+            }
             break;
         }
         default:
@@ -407,47 +444,46 @@ void MainWidget::Browse(bool bDirection)
     }
 }
 
-void MainWidget::Transfer(bool bDirection)
+void MainWidget::Zoom(bool bDirection)
 {
     // 如果之前paintEvent有未处理的消息，则执行。
     QCoreApplication::processEvents();
-    qDebug() << "Transfer";
-    // 按住ctrl的旋转
-    if ( QApplication::keyboardModifiers () == Qt::ControlModifier)
+    qDebug() << "zoom...";
+    if(bDirection)
     {
-        if(bDirection)
+        if(m_scale > 5)
         {
-            m_degrees += 5;
+            return; // 限制一个最大放大数值
         }
-        else
-        {
-            m_degrees -= 5;
-        }
+        m_scale *= 1.05;
     }
-    // 没按住ctrl的旋转缩放
     else
     {
-        if(bDirection)
+        if(m_scale < 0.2)
         {
-            if(m_scale > 5)
-            {
-                return; // 限制一个最大放大数值
-            }
-            m_scale *= 1.05;
+            return; // 限制一个最小缩小数值
         }
-        else
-        {
-            if(m_scale < 0.2)
-            {
-                return; // 限制一个最小缩小数值
-            }
-            m_scale /= 1.05;
-        }
+        m_scale /= 1.05;
     }
-
     SetMask(false);
 }
 
+void MainWidget::Rotate(bool bDirection)
+{
+    // 如果之前paintEvent有未处理的消息，则执行。
+    QCoreApplication::processEvents();
+    qDebug() << "rotate...";
+
+    if(bDirection)
+    {
+        m_degrees += 3;
+    }
+    else
+    {
+        m_degrees -= 3;
+    }
+    SetMask(false);
+}
 
 void MainWidget::GetPictures(const QDir &dir)
 {
