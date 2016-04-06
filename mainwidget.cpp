@@ -172,11 +172,11 @@ void MainWidget::setupContextMenu()
     // open
     QAction *act_yoda = new QAction(QIcon(":/images/open.png"), tr("&Open(O)..."), this);
     // flip horizontal
-    m_act_flip_h = new QAction(tr("Flip Horizontal"), this);
+    m_act_flip_h = new QAction(tr("Flip &Horizontal(H)"), this);
     m_act_flip_h->setCheckable(true);
     m_act_flip_h->setChecked(false);
     // flip vertical
-    m_act_flip_v = new QAction(tr("Flip Vertical"), this);
+    m_act_flip_v = new QAction(tr("Flip &Vertical(V)"), this);
     m_act_flip_v->setCheckable(true);
     m_act_flip_v->setChecked(false);
     // top
@@ -188,7 +188,7 @@ void MainWidget::setupContextMenu()
     m_act_keep_scale->setCheckable(true);
     m_act_keep_scale->setChecked(true);
     // help
-    QAction *act_help = new QAction(QIcon(":/images/help.png"), tr("&Help(H)"), this);
+    QAction *act_help = new QAction(QIcon(":/images/help.png"), tr("Help"), this);
     // quit
     QAction *act_quit = new QAction(QIcon(":/images/quit.png"), tr("&Quit(Q)"), this);
 
