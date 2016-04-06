@@ -131,7 +131,9 @@ void MainWidget::TriggerHelp()
                                           QString::fromUtf8(content),
                                           QMessageBox::Ok);
 
-//    msgBox->setIconPixmap(QPixmap(":/images/yoda.png"));
+    msgBox->setIconPixmap(QPixmap(":/images/help.png").scaled(QSize(64, 64),
+                                                              Qt::KeepAspectRatio,
+                                                              Qt::SmoothTransformation));
     msgBox->show();
 }
 
@@ -168,7 +170,7 @@ void MainWidget::setupContextMenu()
     setContextMenuPolicy(Qt::ActionsContextMenu);
 
     // open
-    QAction *act_yoda = new QAction(QIcon(":/images/yoda.png"), tr("Open"), this);
+    QAction *act_yoda = new QAction(QIcon(":/images/open.png"), tr("&Open(O)..."), this);
     // flip horizontal
     m_act_flip_h = new QAction(tr("Flip Horizontal"), this);
     m_act_flip_h->setCheckable(true);
@@ -178,17 +180,17 @@ void MainWidget::setupContextMenu()
     m_act_flip_v->setCheckable(true);
     m_act_flip_v->setChecked(false);
     // top
-    QAction *act_top = new QAction( tr("Always on Top"), this);
+    QAction *act_top = new QAction( tr("&Always on Top(A)"), this);
     act_top->setCheckable(true);
     act_top->setChecked(false);
     // lock scale
-    m_act_keep_scale = new QAction(tr("Keep Scale"), this);
+    m_act_keep_scale = new QAction(tr("&Keep Scale(K)"), this);
     m_act_keep_scale->setCheckable(true);
     m_act_keep_scale->setChecked(true);
     // help
-    QAction *act_rabbit = new QAction(tr("Help"), this);
+    QAction *act_help = new QAction(QIcon(":/images/help.png"), tr("&Help(H)"), this);
     // quit
-    QAction *act_quit = new QAction(tr("&Quit"), this);
+    QAction *act_quit = new QAction(QIcon(":/images/quit.png"), tr("&Quit(Q)"), this);
 
     // adds
     addAction(act_yoda);
@@ -196,14 +198,14 @@ void MainWidget::setupContextMenu()
     addAction(m_act_flip_v);
     addAction(act_top);
     addAction(m_act_keep_scale);
-    addAction(act_rabbit);
+    addAction(act_help);
     addAction(act_quit);
     // slot
     connect(act_yoda, SIGNAL(triggered()), this, SLOT(TriggerOpenDialog()));
     connect(m_act_flip_h, SIGNAL(triggered()), this, SLOT(TriggerFlip()));
     connect(m_act_flip_v, SIGNAL(triggered()), this, SLOT(TriggerFlip()));
     connect(act_top, SIGNAL(triggered()), this, SLOT(TrigerAlwaysOnTop()));
-    connect(act_rabbit, SIGNAL(triggered()), this, SLOT(TriggerHelp()));
+    connect(act_help, SIGNAL(triggered()), this, SLOT(TriggerHelp()));
     connect(act_quit, SIGNAL(triggered()), this, SLOT(close()));
 }
 

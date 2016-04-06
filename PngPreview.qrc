@@ -1,6 +1,9 @@
 <RCC>
     <qresource prefix="/">
         <file>images/yoda.png</file>
-	<file>help/shortcutkey.txt</file>
+        <file>images/open.png</file>
+        <file>images/help.png</file>
+        <file>images/quit.png</file>
+        <file>help/shortcutkey.txt</file>
     </qresource>
 </RCC>
