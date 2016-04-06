@@ -4,6 +4,7 @@
 #include <QPoint>
 #include <QDebug>
 #include <QLabel>
+#include <QtGlobal>
 #include "mainwidget.h"
 #include "messagewidget.h"
 
@@ -212,11 +213,15 @@ void MainWidget::setupContextMenu()
 /* 单纯单击 */
 void MainWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-//    qDebug() << m_bMouseMove;
     if(event->button() == Qt::LeftButton && !m_bMouseMove)
     {
-        bool bDirection = (event->globalPos().x() > frameGeometry().center().x()) ? true : false;
-        Browse(bDirection);
+        // 偏离中心点超过1/4的宽度才启动browse逻辑
+        qDebug() << "abs:" << qAbs(event->globalPos().x() - frameGeometry().center().x()) << " 1/4:" << (frameGeometry().width()/4 ) ;
+        if( qAbs(event->globalPos().x() - frameGeometry().center().x()) > (frameGeometry().width() / 4) )
+        {
+            bool bDirection = (event->globalPos().x() > frameGeometry().center().x()) ? true : false;
+            Browse(bDirection);
+        }
     }
 }
 
