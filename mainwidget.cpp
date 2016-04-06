@@ -195,10 +195,10 @@ void MainWidget::setupContextMenu()
 
     // adds
     addAction(act_yoda);
+    addAction(m_act_keep_scale);
+    addAction(act_top);
     addAction(m_act_flip_h);
     addAction(m_act_flip_v);
-    addAction(act_top);
-    addAction(m_act_keep_scale);
     addAction(act_help);
     addAction(act_quit);
     // slot
