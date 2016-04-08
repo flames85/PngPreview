@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QLabel>
 #include <QtGlobal>
+#include <QNetworkReply>
 #include "mainwidget.h"
 #include "messagewidget.h"
 #include "networkPicture.h"
@@ -12,7 +13,7 @@
 MainWidget::MainWidget(QWidget *parent) :
     QWidget(parent, Qt::FramelessWindowHint),
     m_bMouseMove(false),
-    m_originPos(new QPoint),
+    m_originPos(new QPoint()),
     m_originPixmap(new QPixmap()),
     m_scale(1.0),
     m_act_keep_scale(NULL),
@@ -20,14 +21,18 @@ MainWidget::MainWidget(QWidget *parent) :
     m_act_flip_h(NULL),
     m_act_flip_v(NULL),
     m_msgWidget(new MessageWidget()),
-    m_networkPic(new NetworkPicture(this))
+    m_networkPic(new NetworkPicture(this)),
+    m_movie(new QMovie(this))
 {
     m_supportFormatList << "png" << "jpg" << "gif" << "bmp" << "tiff" << "ico" << "svg";
 
     connect(m_networkPic,
-            SIGNAL( ShowNetworkPicture(const QByteArray &) ),
+            SIGNAL( ShowNetworkPicture(QNetworkReply *) ),
             this,
-            SLOT(TriggerShowNetworkPicture(const QByteArray &)));
+            SLOT(TriggerShowNetworkPicture(QNetworkReply *)));
+
+    connect(m_movie, SIGNAL(updated(const QRect &)), this, SLOT(TriggerMovieUpdated(const QRect &)));
+    connect(m_movie, SIGNAL(finished()), this, SLOT(TriggerMovieFinished()));
 }
 
 MainWidget::~MainWidget()
@@ -64,32 +69,43 @@ bool MainWidget::OpenPic(const QString &strPic)
 
 bool MainWidget::OpenPic(const QString &strPic, const QDir *dir)
 {
-    if(!m_originPixmap->load(strPic))
+    if(m_movie->Running)
     {
-        bool bLoadSuccess = false;
-        foreach(const QString &strFormat, m_supportFormatList)
+        m_movie->stop();
+    }
+    if(strPic.endsWith("gif", Qt::CaseInsensitive))
+    {
+        m_movie->setFileName(strPic);
+        m_movie->start();
+    }
+    else
+    {
+        if(!m_originPixmap->load(strPic))
         {
-            if(strPic.endsWith(strFormat, Qt::CaseInsensitive ))
+            bool bLoadSuccess = false;
+            foreach(const QString &strFormat, m_supportFormatList)
             {
-                continue;
+                if(strPic.endsWith(strFormat, Qt::CaseInsensitive))
+                {
+                    continue;
+                }
+
+                if(m_originPixmap->load(strPic, strFormat.toAscii().data()))
+                {
+                    bLoadSuccess = true;
+                    break;
+                }
             }
 
-            if(m_originPixmap->load(strPic, strFormat.toAscii().data()))
+            if(!bLoadSuccess)
             {
-                bLoadSuccess = true;
-                break;
+                QString strMsg = QString("open picture %1 fail!").arg(strPic);
+                qDebug() << strMsg;
+                m_msgWidget->ShowMessage(strMsg);
+                return false;
             }
-        }
-
-        if(!bLoadSuccess)
-        {
-            QString strMsg = QString("open picture %1 fail!").arg(strPic);
-            qDebug() << strMsg;
-            m_msgWidget->ShowMessage(strMsg);
-            return false;
         }
     }
-
     // 只有打开成功，才更新当期文件
     m_strCurrentPic = strPic;
     // 只有打开成功，才更新目录
@@ -166,17 +182,34 @@ void MainWidget::TriggerFlip()
     SetMask(false);
 }
 
-void MainWidget::TriggerShowNetworkPicture(const QByteArray &picData)
+void MainWidget::TriggerShowNetworkPicture(QNetworkReply *reply)
 {
+    // 打开前先确定动画必须关闭
+    if(m_movie->Running)
+    {
+        m_movie->stop();
+    }
+
     // 打开的是网络图片,所以本地图片删除
     m_strCurrentPic.clear();
     m_dirPic.clear();
 
-    if(!m_originPixmap->loadFromData(picData))
+    //  如果是动画,则用movie播放
+    if(m_networkPic->m_url.toString().endsWith("gif", Qt::CaseInsensitive))
     {
-        QString strMsg = QString("open picture from %1 fail!").arg(m_networkPic->m_url.toString());
-        qDebug() << strMsg;
-        m_msgWidget->ShowMessage(strMsg);
+        // 由于网络数据流只流过一次, 所以网络动画只能播放一次
+        m_movie->setDevice(reply);
+        m_movie->start();
+    }
+    else
+    {
+        // 如果是普通静态图, 用pixmap显示
+        if(!m_originPixmap->loadFromData(reply->readAll()))
+        {
+            QString strMsg = QString("open picture from %1 fail!").arg(m_networkPic->m_url.toString());
+            qDebug() << strMsg;
+            m_msgWidget->ShowMessage(strMsg);
+        }
     }
 
     //! 因为打开了新文件: 初始化所有状态
@@ -323,7 +356,6 @@ void MainWidget::dropEvent(QDropEvent *event)
 /* 绘制窗体 */
 void MainWidget::paintEvent(QPaintEvent *)
 {
-    qDebug() << "paintEvent...";
     QPainter painter(this);
     painter.fillRect(0, 0, m_transferdPixmap.width(), m_transferdPixmap.height(), m_transferdPixmap);
 //    painter.drawPixmap(QPointF(0, 0), m_transferdPixmap);
@@ -361,7 +393,7 @@ void MainWidget::SetMask(bool bNeedFixPos)
     pixmap = pixmap.transformed(leftmatrix, Qt::SmoothTransformation);
 
     // 翻转
-    qDebug() << "flip:" << m_act_flip_h->isChecked() << m_act_flip_v->isChecked();
+//    qDebug() << "flip:" << m_act_flip_h->isChecked() << m_act_flip_v->isChecked();
     pixmap = QPixmap::fromImage( pixmap.toImage().mirrored(m_act_flip_h->isChecked(), m_act_flip_v->isChecked()) );
 
     // 修正移动的位置,因为图片的大小肯定不一致，而我们希望每次显示的图片都和原来的中心点位置一致
@@ -562,4 +594,19 @@ void MainWidget::Move(const QPoint &moveTo)
     m_msgWidget->move(moveTo);
     m_msgWidget->raise();
     qDebug() << "move to: " << moveTo;
+}
+
+
+void MainWidget::TriggerMovieUpdated(const QRect &)
+{
+    *m_originPixmap = m_movie->currentPixmap();
+    SetMask(false);
+}
+
+void MainWidget::TriggerMovieFinished()
+{
+    qDebug() << "TriggerMovieFinished state:"
+             << m_movie->Running
+             << m_movie->frameCount()
+             << m_movie->currentFrameNumber();
 }

@@ -14,18 +14,10 @@ class NetworkPicture : public QObject
 public:
     explicit NetworkPicture(QObject *parent=0);
     virtual ~NetworkPicture();
-
     void Get(const QUrl &url);
-
 signals:
-
-    void ShowNetworkPicture(const QByteArray &data);
-
+    void ShowNetworkPicture(QNetworkReply *);
 protected:
-
-
-private:
-
 
 private slots:
 

@@ -32,6 +32,6 @@ void NetworkPicture::replyFinished(QNetworkReply *reply)
     {
         qDebug() << "replyFinished ok!";
         //获取字节流构造 QPixmap 对象
-        emit ShowNetworkPicture(reply->readAll());
+        emit ShowNetworkPicture(reply);
     }
 }

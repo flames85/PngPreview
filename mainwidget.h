@@ -10,6 +10,7 @@ class QDir;
 class MessageWidget;
 class NetworkPicture;
 class QUrl;
+class QNetworkReply;
 
 class MainWidget : public QWidget
 {
@@ -40,8 +41,6 @@ protected:
     virtual void dropEvent(QDropEvent *event);
 
 private:
-
-
     // 右键菜单
     void setupContextMenu();
     // 将图片设置为界面
@@ -68,13 +67,17 @@ private slots:
     void TriggerFlip();
 
     // 显示网络图片
-    void TriggerShowNetworkPicture(const QByteArray &picData);
+    void TriggerShowNetworkPicture(QNetworkReply *reply);
+
+    // 显示动画
+    void TriggerMovieUpdated(const QRect &);
+    void TriggerMovieFinished();
 
 private:
     // 判断鼠标位置是否移动了
     bool            m_bMouseMove;
     // 原始位置
-    QPoint*         m_originPos;
+    QPoint         *m_originPos;
 
     //! 以下一组成员变量保存了图片的信息, 每次变化图片显示(包括新打开图片,旋转图片,缩放图片)都以原图信息做改变厚显示
     /***************************************/
@@ -101,10 +104,13 @@ private:
     QList<QString>  m_supportFormatList;
 
     // message widget
-    MessageWidget*  m_msgWidget;
+    MessageWidget   *m_msgWidget;
 
     // 网络图片
     NetworkPicture  *m_networkPic;
+
+    // 动画
+    QMovie          *m_movie;
 };
 
 #endif // __MAIN_WIDGET_H__
