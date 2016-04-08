@@ -7,6 +7,7 @@
 #include <QtGlobal>
 #include "mainwidget.h"
 #include "messagewidget.h"
+#include "networkPicture.h"
 
 MainWidget::MainWidget(QWidget *parent) :
     QWidget(parent, Qt::FramelessWindowHint),
@@ -18,9 +19,15 @@ MainWidget::MainWidget(QWidget *parent) :
     m_degrees(0),
     m_act_flip_h(NULL),
     m_act_flip_v(NULL),
-    m_msgWidget( new MessageWidget())
+    m_msgWidget(new MessageWidget()),
+    m_networkPic(new NetworkPicture(this))
 {
     m_supportFormatList << "png" << "jpg" << "gif" << "bmp" << "tiff" << "ico" << "svg";
+
+    connect(m_networkPic,
+            SIGNAL( ShowNetworkPicture(const QByteArray &) ),
+            this,
+            SLOT(TriggerShowNetworkPicture(const QByteArray &)));
 }
 
 MainWidget::~MainWidget()
@@ -35,13 +42,20 @@ MainWidget::~MainWidget()
     }
 }
 
+void MainWidget::OpenPic(const QUrl &url)
+{
+    m_networkPic->Get(url);
+}
+
 bool MainWidget::OpenPic(const QString &strPic)
 {
-//    qDebug() << this->pos();
+    qDebug() << "open pic:" << strPic;
     QFileInfo picInfo(strPic);
     if(!picInfo.exists())
     {
-        qDebug() << "file not exists:" << strPic;
+        QString strMsg = QString("open picture %1 fail: file not exists!").arg(strPic);
+        qDebug() << strMsg;
+        m_msgWidget->ShowMessage(strMsg);
         return false;
     }
 
@@ -50,7 +64,6 @@ bool MainWidget::OpenPic(const QString &strPic)
 
 bool MainWidget::OpenPic(const QString &strPic, const QDir *dir)
 {
-    qDebug() << "OpenPic" << this->pos();
     if(!m_originPixmap->load(strPic))
     {
         bool bLoadSuccess = false;
@@ -70,7 +83,7 @@ bool MainWidget::OpenPic(const QString &strPic, const QDir *dir)
 
         if(!bLoadSuccess)
         {
-            QString strMsg = QString("open file: %1 fail!").arg(strPic);
+            QString strMsg = QString("open picture %1 fail!").arg(strPic);
             qDebug() << strMsg;
             m_msgWidget->ShowMessage(strMsg);
             return false;
@@ -125,11 +138,11 @@ void MainWidget::TriggerHelp()
         return;
     }
 
-    QByteArray content = help.readAll();
+    QByteArray context = help.readAll();
 
     QMessageBox *msgBox = new QMessageBox(QMessageBox::Information,
                                           "Help",
-                                          QString::fromUtf8(content),
+                                          QString::fromUtf8(context),
                                           QMessageBox::Ok);
 
     msgBox->setIconPixmap(QPixmap(":/images/help.png").scaled(QSize(64, 64),
@@ -151,6 +164,32 @@ void MainWidget::TrigerAlwaysOnTop()
 void MainWidget::TriggerFlip()
 {
     SetMask(false);
+}
+
+void MainWidget::TriggerShowNetworkPicture(const QByteArray &picData)
+{
+    // 打开的是网络图片,所以本地图片删除
+    m_strCurrentPic.clear();
+    m_dirPic.clear();
+
+    if(!m_originPixmap->loadFromData(picData))
+    {
+        QString strMsg = QString("open picture from %1 fail!").arg(m_networkPic->m_url.toString());
+        qDebug() << strMsg;
+        m_msgWidget->ShowMessage(strMsg);
+    }
+
+    //! 因为打开了新文件: 初始化所有状态
+    if(!m_act_keep_scale->isChecked()) // 只有非保持缩放的时候才初始化scale为1
+    {
+        m_scale = 1.0;
+    }
+    m_degrees = 0;
+    m_act_flip_h->setChecked(false);
+    m_act_flip_v->setChecked(false);
+    //! 初始化结束
+
+    SetMask(true);
 }
 
 void MainWidget::Init()
@@ -263,13 +302,17 @@ void MainWidget::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWidget::dropEvent(QDropEvent *event)
 {
+    qDebug() << "dropEvent" << event->mimeData()->urls();
     QList<QUrl> urls = event->mimeData()->urls();
     if (urls.isEmpty()) {
         return;
     }
 
     QString fileName = urls.first().toLocalFile();
-    if (fileName.isEmpty()) {
+    if (fileName.isEmpty())
+    {
+        QString strUrl = urls.first().toString();
+        OpenPic(QUrl(strUrl));
         return;
     }
 
@@ -309,7 +352,6 @@ void MainWidget::wheelEvent(QWheelEvent *event)
 
 void MainWidget::SetMask(bool bNeedFixPos)
 {
-//    qDebug() << "degress:" << m_degrees << " scale" << m_scale;
     // 缩放
     QPixmap &pixmap = m_originPixmap->scaled(m_originPixmap->width() * m_scale,
                                              m_originPixmap->height() * m_scale);
@@ -331,7 +373,6 @@ void MainWidget::SetMask(bool bNeedFixPos)
         QPoint finalTopleft = this->frameGeometry().topLeft() + deltaPos;
         Move(finalTopleft);
     }
-
 
     // mask
     m_transferdPixmap = pixmap;

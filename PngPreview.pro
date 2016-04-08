@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 TARGET = PngPreview
 TEMPLATE = app
@@ -12,11 +12,13 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     mainwidget.cpp \
-    messagewidget.cpp
+    messagewidget.cpp \
+    networkpicture.cpp
 
 HEADERS  += \
     mainwidget.h \
-    messagewidget.h
+    messagewidget.h \
+    networkPicture.h
 
 RESOURCES += \
     PngPreview.qrc

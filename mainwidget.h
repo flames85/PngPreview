@@ -8,6 +8,8 @@ class QPoint;
 class QPixmap;
 class QDir;
 class MessageWidget;
+class NetworkPicture;
+class QUrl;
 
 class MainWidget : public QWidget
 {
@@ -18,7 +20,11 @@ public:
 
     void Init();
 
+    // 打开网络图片
+    void OpenPic(const QUrl &url);
+    // 打开本地图片
     bool OpenPic(const QString &strPic);
+    // 打开本地图片
     bool OpenPic(const QString &strPic, const QDir *dir);
 
 protected:
@@ -34,6 +40,7 @@ protected:
     virtual void dropEvent(QDropEvent *event);
 
 private:
+
 
     // 右键菜单
     void setupContextMenu();
@@ -57,10 +64,11 @@ private slots:
     void TriggerHelp();
     // 设置始终保持最前
     void TrigerAlwaysOnTop();
-//    // 设置保持缩放
-//    void TrigerKeepScale();
     // 垂直或水平翻转
     void TriggerFlip();
+
+    // 显示网络图片
+    void TriggerShowNetworkPicture(const QByteArray &picData);
 
 private:
     // 判断鼠标位置是否移动了
@@ -94,6 +102,9 @@ private:
 
     // message widget
     MessageWidget*  m_msgWidget;
+
+    // 网络图片
+    NetworkPicture  *m_networkPic;
 };
 
 #endif // __MAIN_WIDGET_H__

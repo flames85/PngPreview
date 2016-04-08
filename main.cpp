@@ -1,6 +1,6 @@
 #include <QtGui/QApplication>
 #include <QIcon>
-
+#include <QUrl>
 #include "mainwidget.h"
 
 int main(int argc, char *argv[])
@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     else
     {
         widget->OpenPic(":/images/yoda.png", NULL);
+//        widget->OpenPic(QUrl( QString("http://www.oschina.net/img/logo_s2.png") ));
     }
 
     return app.exec();
