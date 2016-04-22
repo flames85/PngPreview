@@ -11,6 +11,7 @@ class MessageWidget;
 class NetworkPicture;
 class QUrl;
 class QNetworkReply;
+class QBuffer;
 
 class MainWidget : public QWidget
 {
@@ -36,7 +37,7 @@ protected:
     virtual void wheelEvent(QWheelEvent *event);
 //    virtual void mouseDoubleClickEvent(QMouseEvent *event);
     virtual void keyPressEvent(QKeyEvent *e);
-    virtual void keyReleaseEvent(QKeyEvent *e);
+//    virtual void keyReleaseEvent(QKeyEvent *e);
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dropEvent(QDropEvent *event);
 
@@ -71,7 +72,7 @@ private slots:
 
     // 显示动画
     void TriggerMovieUpdated(const QRect &);
-    void TriggerMovieFinished();
+//    void TriggerMovieFinished();
 
 private:
     // 判断鼠标位置是否移动了
@@ -108,6 +109,7 @@ private:
 
     // 网络图片
     NetworkPicture  *m_networkPic;
+    QBuffer         *m_networkPicBuffer;
 
     // 动画
     QMovie          *m_movie;

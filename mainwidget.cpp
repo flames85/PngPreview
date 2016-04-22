@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QtGlobal>
 #include <QNetworkReply>
+#include <QBuffer>
 #include "mainwidget.h"
 #include "messagewidget.h"
 #include "networkPicture.h"
@@ -22,6 +23,7 @@ MainWidget::MainWidget(QWidget *parent) :
     m_act_flip_v(NULL),
     m_msgWidget(new MessageWidget()),
     m_networkPic(new NetworkPicture(this)),
+    m_networkPicBuffer(new QBuffer(this)),
     m_movie(new QMovie(this))
 {
     m_supportFormatList << "png" << "jpg" << "gif" << "bmp" << "tiff" << "ico" << "svg";
@@ -32,7 +34,7 @@ MainWidget::MainWidget(QWidget *parent) :
             SLOT(TriggerShowNetworkPicture(QNetworkReply *)));
 
     connect(m_movie, SIGNAL(updated(const QRect &)), this, SLOT(TriggerMovieUpdated(const QRect &)));
-    connect(m_movie, SIGNAL(finished()), this, SLOT(TriggerMovieFinished()));
+//    connect(m_movie, SIGNAL(finished()), this, SLOT(TriggerMovieFinished()));
 }
 
 MainWidget::~MainWidget()
@@ -198,8 +200,18 @@ void MainWidget::TriggerShowNetworkPicture(QNetworkReply *reply)
     if(m_networkPic->m_url.toString().endsWith("gif", Qt::CaseInsensitive))
     {
         // 由于网络数据流只流过一次, 所以网络动画只能播放一次
-        m_movie->setDevice(reply);
+        QByteArray data = reply->readAll();
+
+        m_networkPicBuffer->open(QIODevice::WriteOnly);
+
+        qDebug() << "m_networkPicBuffer:" << m_networkPicBuffer->size();
+
+        m_networkPicBuffer->write(data);
+        m_networkPicBuffer->close();
+
+        m_movie->setDevice(m_networkPicBuffer);
         m_movie->start();
+
     }
     else
     {
@@ -248,14 +260,17 @@ void MainWidget::setupContextMenu()
     m_act_flip_h = new QAction(tr("Flip &Horizontal(H)"), this);
     m_act_flip_h->setCheckable(true);
     m_act_flip_h->setChecked(false);
+
     // flip vertical
     m_act_flip_v = new QAction(tr("Flip &Vertical(V)"), this);
     m_act_flip_v->setCheckable(true);
     m_act_flip_v->setChecked(false);
+
     // top
     QAction *act_top = new QAction( tr("&Always on Top(A)"), this);
     act_top->setCheckable(true);
     act_top->setChecked(false);
+
     // lock scale
     m_act_keep_scale = new QAction(tr("&Keep Scale(K)"), this);
     m_act_keep_scale->setCheckable(true);
@@ -273,11 +288,14 @@ void MainWidget::setupContextMenu()
     addAction(m_act_flip_v);
     addAction(act_help);
     addAction(act_quit);
+
     // slot
     connect(act_yoda, SIGNAL(triggered()), this, SLOT(TriggerOpenDialog()));
     connect(m_act_flip_h, SIGNAL(triggered()), this, SLOT(TriggerFlip()));
     connect(m_act_flip_v, SIGNAL(triggered()), this, SLOT(TriggerFlip()));
     connect(act_top, SIGNAL(triggered()), this, SLOT(TrigerAlwaysOnTop()));
+    act_top->trigger(); // 修改为初始就是前端显示的
+
     connect(act_help, SIGNAL(triggered()), this, SLOT(TriggerHelp()));
     connect(act_quit, SIGNAL(triggered()), this, SLOT(close()));
 }
@@ -464,15 +482,15 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
     }
 }
 
-void MainWidget::keyReleaseEvent(QKeyEvent *e)
-{
-//    if(e->isAutoRepeat()){
-//        qDebug() <<  "repeat release ...";
-//    }
-//    else{
-//        qDebug() << "release";
-//    }
-}
+//void MainWidget::keyReleaseEvent(QKeyEvent *e)
+//{
+////    if(e->isAutoRepeat()){
+////        qDebug() <<  "repeat release ...";
+////    }
+////    else{
+////        qDebug() << "release";
+////    }
+//}
 
 void MainWidget::Browse(bool bDirection)
 {
@@ -603,10 +621,10 @@ void MainWidget::TriggerMovieUpdated(const QRect &)
     SetMask(false);
 }
 
-void MainWidget::TriggerMovieFinished()
-{
-    qDebug() << "TriggerMovieFinished state:"
-             << m_movie->Running
-             << m_movie->frameCount()
-             << m_movie->currentFrameNumber();
-}
+//void MainWidget::TriggerMovieFinished()
+//{
+//    qDebug() << "TriggerMovieFinished state:"
+//             << m_movie->Running
+//             << m_movie->frameCount()
+//             << m_movie->currentFrameNumber();
+//}
